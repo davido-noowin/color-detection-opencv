@@ -3,33 +3,37 @@ from PIL import Image
 
 from util import get_limits
 
+CAP = cv2.VideoCapture(0) # only 1 webcam, so it is 0
+YELLOW = [0, 255, 255]
+def main():
+    while True:
+        ret, frame = CAP.read()
 
-yellow = [0, 255, 255]  # yellow in BGR colorspace
-cap = cv2.VideoCapture(2)
-while True:
-    ret, frame = cap.read()
+        hsvImage = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    hsvImage = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        lower_limit, upper_limit = get_limits(YELLOW)
+        
+        mask = cv2.inRange(hsvImage, lower_limit, upper_limit)
 
-    lowerLimit, upperLimit = get_limits(color=yellow)
+        mask_ = Image.fromarray(mask)
 
-    mask = cv2.inRange(hsvImage, lowerLimit, upperLimit)
+        boundingBox = mask_.getbbox()
 
-    mask_ = Image.fromarray(mask)
+        if boundingBox:
+            x1, y1, x2, y2 = boundingBox
+            frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        
+        cv2.imshow("Frame", frame)
 
-    bbox = mask_.getbbox()
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
-    if bbox is not None:
-        x1, y1, x2, y2 = bbox
+    CAP.release()
 
-        frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 5)
+    cv2.destroyAllWindows()
 
-    cv2.imshow('frame', frame)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
 
-cap.release()
-
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()
 
